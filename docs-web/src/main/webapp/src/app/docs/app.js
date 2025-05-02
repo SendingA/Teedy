@@ -244,6 +244,17 @@ angular.module('docs',
         }
       }
     })
+
+    .state('settings.registerRequest', {
+      url: '/registerRequest',
+      views: {
+        'settings': {
+          templateUrl: 'partial/docs/settings.registerRequest.html',
+          controller: 'SettingsRegisterRequest'
+        }
+      }
+    })
+
     .state('settings.ldap', {
       url: '/ldap',
       views: {
@@ -409,7 +420,8 @@ angular.module('docs',
         }
       }
     })
-    .state('group.profile', {
+
+      .state('group.profile', {
       url: '/:name',
       views: {
         'sub': {

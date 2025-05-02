@@ -42,6 +42,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -1168,6 +1169,50 @@ public class UserResource extends BaseResource {
     }
 
 
+    /**
+     * Returns all user register requests.
+     *
+     * @api {get} /user/register_request/list Get register requests
+     * @apiName GetRegisterRequestList
+     * @apiGroup User
+     * @apiSuccess {Object[]} requests List of registration requests
+     * @apiSuccess {String} requests.id ID
+     * @apiSuccess {String} requests.username Username
+     * @apiSuccess {String} requests.email E-mail
+     * @apiSuccess {String} requests.message Message
+     * @apiSuccess {String} requests.status Status (pending/approved/rejected)
+     * @apiSuccess {Number} requests.create_date Timestamp of request creation
+     * @apiError (client) ForbiddenError Access denied
+     * @apiPermission admin
+     * @apiVersion 1.0.0
+     */
+    @GET
+    @Path("register_request/list")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response listRegisterRequests() {
+        if (!authenticate()) throw new ForbiddenClientException();
+        checkBaseFunction(BaseFunction.ADMIN);
+
+        RegisterRequestDao requestDao = new RegisterRequestDao();
+        List<RegisterRequest> requestList = requestDao.findAll();
+
+        JsonArrayBuilder requests = Json.createArrayBuilder();
+        for (RegisterRequest req : requestList) {
+            requests.add(Json.createObjectBuilder()
+                    .add("id", req.getId())
+                    .add("username", req.getUsername())
+                    .add("email", req.getEmail())
+                    .add("message", Optional.ofNullable(req.getMessage()).orElse(""))
+                    .add("status", req.getStatus())
+                    .add("create_date", req.getCreateDate().getTime()));
+        }
+
+        JsonObjectBuilder response = Json.createObjectBuilder()
+                .add("requests", requests);
+        return Response.ok().entity(response.build()).build();
+    }
+
+
 
 
     @POST
@@ -1207,6 +1252,32 @@ public class UserResource extends BaseResource {
         requestDao.update(request);
 
         return Response.ok(Json.createObjectBuilder().add("status", "approved").build()).build();
+    }
+
+
+    @POST
+    @Path("register_request/{id}/reject")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response rejectRegisterRequest(@PathParam("id") String requestId) {
+        if (!authenticate()) throw new ForbiddenClientException();
+        checkBaseFunction(BaseFunction.ADMIN);
+
+        RegisterRequestDao requestDao = new RegisterRequestDao();
+        RegisterRequest request = requestDao.getById(requestId);
+        if (request == null || !"pending".equals(request.getStatus())) {
+            throw new ClientException("RequestNotFound", "No such pending request");
+        }
+
+        // 更新注册请求状态为拒绝
+        request.setStatus("rejected");
+        try {
+            requestDao.update(request);
+        } catch (Exception e) {
+            throw new ServerException("FailedUpdateRequest", e.getMessage());
+        }
+
+        // 返回响应
+        return Response.ok(Json.createObjectBuilder().add("status", "rejected").build()).build();
     }
 
 

@@ -34,4 +34,11 @@ public class RegisterRequestDao {
         EntityManager em = ThreadLocalContext.get().getEntityManager();
         em.remove(request);
     }
+
+    public List<RegisterRequest> findAll() {
+        EntityManager em = ThreadLocalContext.get().getEntityManager();
+        return em.createQuery("select r from RegisterRequest r order by r.createDate desc", RegisterRequest.class)
+                .getResultList();
+    }
+
 }

@@ -1,0 +1,26 @@
+<div class="container" ng-controller="SettingsRegisterRequest">
+    <h3>用户注册请求管理</h3>
+    <table class="table table-striped">
+        <thead>
+        <tr>
+            <th>用户名</th>
+            <th>邮箱</th>
+            <th>留言</th>
+            <th>状态</th>
+            <th>操作</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr ng-repeat="req in requests">
+            <td>{{ req.username }}</td>
+            <td>{{ req.email }}</td>
+            <td>{{ req.message }}</td>
+            <td>{{ req.status }}</td>
+            <td>
+                <button class="btn btn-success btn-sm" ng-click="approveRequest(req.id)" ng-if="req.status == 'pending'">批准</button>
+                <button class="btn btn-danger btn-sm" ng-click="rejectRequest(req.id)" ng-if="req.status == 'pending'">拒绝</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
