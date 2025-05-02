@@ -1142,4 +1142,76 @@ public class UserResource extends BaseResource {
         }
     }
 
+    @POST
+    @Path("register_request")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response createRegisterRequest(
+            @FormParam("username") String username,
+            @FormParam("email") String email,
+            @FormParam("message") String message) {
+
+        // 简单校验
+        ValidationUtil.validateStringNotBlank("username", username);
+        ValidationUtil.validateEmail(email, "email");
+
+        // 保存注册请求（建议创建 RegisterRequestDao 和 RegisterRequest 实体类）
+        RegisterRequestDao requestDao = new RegisterRequestDao();
+        RegisterRequest request = new RegisterRequest();
+        request.setUsername(username);
+        request.setEmail(email);
+        request.setMessage(message);
+        request.setStatus("pending");
+        request.setCreateDate(new Date());
+        requestDao.create(request);
+
+        return Response.ok(Json.createObjectBuilder().add("status", "ok").build()).build();
+    }
+
+
+
+
+    @POST
+    @Path("register_request/{id}/approve")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response approveRegisterRequest(@PathParam("id") String requestId) {
+        if (!authenticate()) throw new ForbiddenClientException();
+        checkBaseFunction(BaseFunction.ADMIN);
+
+        RegisterRequestDao requestDao = new RegisterRequestDao();
+        RegisterRequest request = requestDao.getById(requestId);
+        if (request == null || !"pending".equals(request.getStatus())) {
+            throw new ClientException("RequestNotFound", "No such pending request");
+        }
+
+        // 创建正式用户
+        User user = new User();
+        user.setUsername(request.getUsername());
+        user.setEmail(request.getEmail());
+        user.setPassword("changeme123"); // 初始密码 or 发送邮件提醒修改
+        user.setRoleId(Constants.DEFAULT_USER_ROLE);
+        user.setStorageQuota(100000000L); // 默认配额
+
+        UserDao userDao = new UserDao();
+        try {
+            userDao.create(user, principal.getId());
+        } catch (Exception e) {
+            if ("AlreadyExistingUsername".equals(e.getMessage())) {
+                throw new ClientException("AlreadyExistingUsername", "用户名已存在");
+            } else {
+                throw new ServerException("FailedCreateUser", e.getMessage());
+            }
+        }
+
+        // 更新注册请求状态
+        request.setStatus("approved");
+        requestDao.update(request);
+
+        return Response.ok(Json.createObjectBuilder().add("status", "approved").build()).build();
+    }
+
+
+
+
+
+
 }
