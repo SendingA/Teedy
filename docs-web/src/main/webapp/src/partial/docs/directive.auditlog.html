@@ -1,56 +1,182 @@
-<table class="table">
-  <tr ng-repeat="log in logs">
-    <td width="20%" class="text-muted small va-middle">{{ log.create_date | timeAgo: $root.dateTimeFormat }}</td>
-    <td width="20%" class="va-middle">
-      <a ng-href="#/user/{{ log.username }}" class="btn btn-xs">
-        <span class="fas fa-user"></span>
-        {{ log.username }}
-      </a>
-    </td>
-    <td class="va-middle">
-      <span ng-class="{ 'text-danger': log.type == 'DELETE', 'text-info': log.type == 'UPDATE', 'text-success': log.type == 'CREATE' }">
-        {{ 'directive.auditlog.' + log.class | translate }}
-        <span ng-switch="log.type">
-          <span ng-switch-when="CREATE">{{ 'directive.auditlog.log_created' | translate }}</span>
-          <span ng-switch-when="UPDATE">{{ 'directive.auditlog.log_updated' | translate }}</span>
-          <span ng-switch-when="DELETE">{{ 'directive.auditlog.log_deleted' | translate }}</span>
-        </span>
-        :
-      </span>
+<!--<table class="table">-->
+<!--  <tr ng-repeat="log in logs">-->
+<!--    <td width="20%" class="text-muted small va-middle">{{ log.create_date | timeAgo: $root.dateTimeFormat }}</td>-->
+<!--    <td width="20%" class="va-middle">-->
+<!--      <a ng-href="#/user/{{ log.username }}" class="btn btn-xs">-->
+<!--        <span class="fas fa-user"></span>-->
+<!--        {{ log.username }}-->
+<!--      </a>-->
+<!--    </td>-->
+<!--    <td class="va-middle">-->
+<!--      <span ng-class="{ 'text-danger': log.type == 'DELETE', 'text-info': log.type == 'UPDATE', 'text-success': log.type == 'CREATE' }">-->
+<!--        {{ 'directive.auditlog.' + log.class | translate }}-->
+<!--        <span ng-switch="log.type">-->
+<!--          <span ng-switch-when="CREATE">{{ 'directive.auditlog.log_created' | translate }}</span>-->
+<!--          <span ng-switch-when="UPDATE">{{ 'directive.auditlog.log_updated' | translate }}</span>-->
+<!--          <span ng-switch-when="DELETE">{{ 'directive.auditlog.log_deleted' | translate }}</span>-->
+<!--        </span>-->
+<!--        :-->
+<!--      </span>-->
 
-      <span ng-switch="log.class">
-        <span ng-switch-when="Document">
-          <a ng-href="#/document/view/{{ log.target }}">{{ log.message }}</a>
+<!--      <span ng-switch="log.class">-->
+<!--        <span ng-switch-when="Document">-->
+<!--          <a ng-href="#/document/view/{{ log.target }}">{{ log.message }}</a>-->
+<!--        </span>-->
+<!--        <span ng-switch-when="File" ng-init="hasDocument = log.message.substring(0, 36).trim().length > 0">-->
+<!--          <a ng-if="log.message" ng-href="#/document/{{ hasDocument ? 'view/' + log.message.substring(0, 36) + '/content/' : '' }}file/{{ log.target }}">-->
+<!--            <span ng-if="log.message.length > 36">{{ log.message | limitTo: 1000 : 36 }}</span>-->
+<!--            <span ng-if="log.message.length == 36">{{ 'open' | translate }}</span>-->
+<!--          </a>-->
+<!--          <a ng-if="!log.message" ng-href="#/document/file/{{ log.target }}">{{ 'open' | translate }}</a>-->
+<!--        </span>-->
+<!--        <span ng-switch-when="Comment">-->
+<!--          <a ng-href="#/document/view/{{ log.message }}">{{ 'see' | translate }}</a>-->
+<!--        </span>-->
+<!--        <span ng-switch-when="Acl" class="label label-default">-->
+<!--          {{ 'acl.' + log.message | translate }}-->
+<!--        </span>-->
+<!--        <span ng-switch-when="Tag">-->
+<!--          <a href="#/tag">{{ log.message }}</a>-->
+<!--        </span>-->
+<!--        <span ng-switch-when="User">-->
+<!--          <a href="#/user/{{ log.message }}">{{ log.message }}</a>-->
+<!--        </span>-->
+<!--        <span ng-switch-when="Group">-->
+<!--          <a href="#/group/{{ log.message }}">{{ log.message }}</a>-->
+<!--        </span>-->
+<!--        <span ng-switch-when="RouteModel">-->
+<!--          <a href="#/settings/workflow/edit/{{ log.target }}">{{ log.message }}</a>-->
+<!--        </span>-->
+<!--        <span ng-switch-when="Route">-->
+<!--          <a ng-href="#/document/view/{{ log.message }}">{{ 'open' | translate }}</a>-->
+<!--        </span>-->
+<!--      </span>-->
+<!--    </td>-->
+<!--  </tr>-->
+<!--</table>-->
+
+
+
+
+<div ng-controller="AuditLogController">
+    <ul class="timeline">
+        <li ng-repeat="log in logs | orderBy:'-create_date' | limitTo: itemsPerPage : (currentPage - 1) * itemsPerPage">
+            <span class="time text-muted">{{ log.create_date | date:'yyyy-MM-dd HH:mm:ss' }}</span>
+            <div class="content">
+        <span class="label"
+              ng-class="{
+                'label-success': log.type === 'CREATE',
+                'label-info': log.type === 'UPDATE',
+                'label-danger': log.type === 'DELETE'
+              }">
+          {{ log.type }}
         </span>
-        <span ng-switch-when="File" ng-init="hasDocument = log.message.substring(0, 36).trim().length > 0">
-          <a ng-if="log.message" ng-href="#/document/{{ hasDocument ? 'view/' + log.message.substring(0, 36) + '/content/' : '' }}file/{{ log.target }}">
-            <span ng-if="log.message.length > 36">{{ log.message | limitTo: 1000 : 36 }}</span>
-            <span ng-if="log.message.length == 36">{{ 'open' | translate }}</span>
-          </a>
-          <a ng-if="!log.message" ng-href="#/document/file/{{ log.target }}">{{ 'open' | translate }}</a>
+                <strong>
+                    <a ng-href="#/user/{{ log.username }}">
+                        <span class="fas fa-user"></span> {{ log.username }}
+                    </a>
+                </strong>
+                对 <em>{{ log.class }}</em> 执行了操作：
+                <span ng-switch="log.type">
+          <span ng-switch-when="CREATE">创建</span>
+          <span ng-switch-when="UPDATE">修改</span>
+          <span ng-switch-when="DELETE">删除</span>
         </span>
-        <span ng-switch-when="Comment">
-          <a ng-href="#/document/view/{{ log.message }}">{{ 'see' | translate }}</a>
+                —— {{ log.message }}
+                <span ng-switch="log.class">
+          <span ng-switch-when="Document">
+            <a ng-href="#/document/view/{{ log.target }}">{{ log.message }}</a>
+          </span>
+          <span ng-switch-when="File">
+            <a ng-if="log.message" ng-href="#/document/file/{{ log.target }}">{{ log.message }}</a>
+            <a ng-if="!log.message" ng-href="#/document/file/{{ log.target }}">打开</a>
+          </span>
+          <span ng-switch-when="Comment">
+            <a ng-href="#/document/view/{{ log.message }}">查看评论</a>
+          </span>
+          <span ng-switch-when="Acl" class="label label-default">
+            {{ 'acl.' + log.message | translate }}
+          </span>
+          <span ng-switch-when="Tag">
+            <a ng-href="#/tag">{{ log.message }}</a>
+          </span>
+          <span ng-switch-when="User">
+            <a ng-href="#/user/{{ log.message }}">{{ log.message }}</a>
+          </span>
+          <span ng-switch-when="Group">
+            <a ng-href="#/group/{{ log.message }}">{{ log.message }}</a>
+          </span>
+          <span ng-switch-when="RouteModel">
+            <a ng-href="#/settings/workflow/edit/{{ log.target }}">{{ log.message }}</a>
+          </span>
+          <span ng-switch-when="Route">
+            <a ng-href="#/document/view/{{ log.message }}">查看</a>
+          </span>
         </span>
-        <span ng-switch-when="Acl" class="label label-default">
-          {{ 'acl.' + log.message | translate }}
-        </span>
-        <span ng-switch-when="Tag">
-          <a href="#/tag">{{ log.message }}</a>
-        </span>
-        <span ng-switch-when="User">
-          <a href="#/user/{{ log.message }}">{{ log.message }}</a>
-        </span>
-        <span ng-switch-when="Group">
-          <a href="#/group/{{ log.message }}">{{ log.message }}</a>
-        </span>
-        <span ng-switch-when="RouteModel">
-          <a href="#/settings/workflow/edit/{{ log.target }}">{{ log.message }}</a>
-        </span>
-        <span ng-switch-when="Route">
-          <a ng-href="#/document/view/{{ log.message }}">{{ 'open' | translate }}</a>
-        </span>
-      </span>
-    </td>
-  </tr>
-</table>
+            </div>
+        </li>
+    </ul>
+
+    <!-- 分页控件 -->
+    <div class="pagination-controls">
+        <button class="btn btn-default" ng-disabled="currentPage == 1" ng-click="currentPage = currentPage - 1">上一页</button>
+        <span>第 {{ currentPage }} 页 / 共 {{ totalPages }} 页</span>
+        <button class="btn btn-default" ng-disabled="currentPage >= totalPages" ng-click="currentPage = currentPage + 1">下一页</button>
+    </div>
+</div>
+
+<!-- 样式 -->
+<style>
+    .timeline {
+        list-style: none;
+        padding-left: 0;
+        position: relative;
+    }
+
+    .timeline li {
+        margin: 1em 0;
+        position: relative;
+    }
+
+    .timeline .time {
+        font-weight: bold;
+        display: block;
+    }
+
+    .timeline .content {
+        margin-left: 1em;
+    }
+
+    .label {
+        margin-right: 0.5em;
+    }
+
+    .label-success {
+        background-color: #5cb85c;
+    }
+
+    .label-info {
+        background-color: #5bc0de;
+    }
+
+    .label-danger {
+        background-color: #d9534f;
+    }
+
+    .text-muted {
+        color: #777;
+    }
+
+    .pagination-controls {
+        margin-top: 1.5em;
+        text-align: center;
+    }
+
+    .pagination-controls button {
+        margin: 0 1em;
+    }
+</style>
+
+
+
+
