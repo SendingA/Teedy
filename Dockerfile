@@ -13,7 +13,10 @@ ENV JETTY_VERSION 11.0.20
 ENV JETTY_HOME /opt/jetty
 
 # Install packages
-RUN apt-get update && \
+# 替换 Ubuntu APT 源为清华源
+RUN sed -i 's/archive.ubuntu.com/mirrors.tuna.tsinghua.edu.cn/g' /etc/apt/sources.list \
+ && sed -i 's/security.ubuntu.com/mirrors.tuna.tsinghua.edu.cn/g' /etc/apt/sources.list \
+ && apt-get update && \
     apt-get -y -q --no-install-recommends install \
     vim less procps unzip wget tzdata openjdk-11-jdk \
     ffmpeg \
@@ -73,3 +76,5 @@ ADD docs-web/target/docs-web-*.war /app/webapps/docs.war
 WORKDIR /app
 
 CMD ["java", "-jar", "/opt/jetty/start.jar"]
+
+
