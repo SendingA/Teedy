@@ -2,15 +2,12 @@ pipeline {
     agent any
 
     environment {
-        // Jenkins中预配置的DockerHub凭据ID
         DOCKER_HUB_CREDENTIALS = credentials('dockerhub_credentials')
-        
-        // Docker Hub仓库路径（用户名/仓库名）
         DOCKER_IMAGE = 'sending1025/teedy-app'
-        
-        // Docker标签，使用Jenkins构建号
         DOCKER_TAG = "${env.BUILD_NUMBER}"
     }
+
+    stages {
 
         stage('Build with Maven') {
             steps {
@@ -40,19 +37,14 @@ pipeline {
         stage('Run Docker Container') {
             steps {
                 script {
-                    // 停止并删除已有容器（若存在）
                     sh 'docker stop teedy-container-8081 || true'
                     sh 'docker rm teedy-container-8081 || true'
-
-                    // 运行新的容器
                     docker.image("${DOCKER_IMAGE}:${DOCKER_TAG}").run(
                         '--name teedy-container-8081 -d -p 8081:8080'
                     )
-
-                    // 列出所有 Teedy 容器（可选）
                     sh 'docker ps --filter "name=teedy-container"'
                 }
             }
         }
     }
-
+}
