@@ -34,14 +34,25 @@ pipeline {
             }
         }
 
-        stage('Run Docker Container') {
+        stage('Run Docker Containers') {
             steps {
                 script {
-                    sh 'docker stop teedy-container-8081 || true'
-                    sh 'docker rm teedy-container-8081 || true'
-                    docker.image("${DOCKER_IMAGE}:${DOCKER_TAG}").run(
-                        '--name teedy-container-8081 -d -p 8081:8080'
-                    )
+                    // 停止并移除旧容器
+                    sh '''
+                        docker stop teedy-container-8082 || true
+                        docker rm teedy-container-8082 || true
+                        docker stop teedy-container-8083 || true
+                        docker rm teedy-container-8083 || true
+                        docker stop teedy-container-8084 || true
+                        docker rm teedy-container-8084 || true
+                    '''
+
+                    // 启动三个容器
+                    docker.image("${DOCKER_IMAGE}:${DOCKER_TAG}").run('--name teedy-container-8082 -d -p 8082:8080')
+                    docker.image("${DOCKER_IMAGE}:${DOCKER_TAG}").run('--name teedy-container-8083 -d -p 8083:8080')
+                    docker.image("${DOCKER_IMAGE}:${DOCKER_TAG}").run('--name teedy-container-8084 -d -p 8084:8080')
+
+                    // 查看是否启动成功
                     sh 'docker ps --filter "name=teedy-container"'
                 }
             }
