@@ -1,4 +1,4 @@
- pipeline {
+pipeline {
     agent any
     environment {
         DEPLOYMENT_NAME = "hello-node"
@@ -18,11 +18,19 @@
                 '''
             }
         }
+        stage('Deploy YAML') {
+            steps {
+                sh '''
+                    echo "Applying deployment.yaml to Minikube..."
+                    kubectl apply -f deployment.yaml
+                '''
+            }
+        }
         stage('Set Image') {
             steps {
                 sh '''
                     echo "Setting image for deployment..."
-                    kubectl set image deployment/${DEPLOYMENT_NAME} ${CONTAINER_NAME}=${IMAGE_NAME}$
+                    kubectl set image deployment/${DEPLOYMENT_NAME} ${CONTAINER_NAME}=${IMAGE_NAME}
                 '''
             }
         }
@@ -33,4 +41,4 @@
             }
         }
     }
- }
+}
